@@ -1,4 +1,5 @@
 # This CMake file should build SuperHaxagon on MinGW and MSVC
+# It will compile the PSP version if used through psp-cmake
 # It will not compile the 3DS version, use the Makefile for that
 cmake_minimum_required(VERSION 3.10)
 project(Super_Haxagon)
@@ -31,24 +32,25 @@ if(MSVC)
     set(SFML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/SFML-MSVC/lib/cmake/SFML")
 endif()
 
-include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../Ndless/ndless-sdk/include")
-include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/libraries/nGL")
-include_directories(SYSTEM "$ENV{DEVKITPRO}/libctru/include")
-include_directories(SYSTEM "$ENV{DEVKITPRO}/libnx/include")
-include_directories(SYSTEM "$ENV{DEVKITPRO}/portlibs/switch/include")
-include_directories(SYSTEM "$ENV{DEVKITPRO}/portlibs/switch/include/freetype2")
-include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/libraries/stb")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+if(PSP)
+    message(STATUS "Compiling PSP version")
+    set(DRIVER source/Driver/PSP/AudioLoaderPSP.cpp source/Driver/PSP/AudioPlayerPSP.cpp source/Driver/PSP/FontPSP.cpp source/Driver/PSP/PlatformPSP.cpp)
+endif()
 
-find_package(SFML 2 COMPONENTS system window graphics audio)
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+if(NOT PSP)
+    include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../Ndless/ndless-sdk/include")
+    include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/libraries/nGL")
+    include_directories(SYSTEM "$ENV{DEVKITPRO}/libctru/include")
+    include_directories(SYSTEM "$ENV{DEVKITPRO}/libnx/include")
+    include_directories(SYSTEM "$ENV{DEVKITPRO}/portlibs/switch/include")
+    include_directories(SYSTEM "$ENV{DEVKITPRO}/portlibs/switch/include/freetype2")
+    include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/libraries/stb")
+    
+    find_package(SFML 2 COMPONENTS system window graphics audio)
+endif()
 
 add_executable(SuperHaxagon WIN32 ${DRIVER}
-    source/Driver/SFML/AudioLoaderSFML.cpp
-    source/Driver/SFML/AudioPlayerSoundSFML.cpp
-    source/Driver/SFML/AudioPlayerMusicSFML.cpp
-    source/Driver/SFML/FontSFML.cpp
-    source/Driver/SFML/PlatformSFML.cpp
-
     source/States/Load.cpp
     source/States/Menu.cpp
     source/States/Over.cpp
@@ -71,7 +73,21 @@ add_executable(SuperHaxagon WIN32 ${DRIVER}
     source/Core/Main.cpp
     source/Core/Structs.cpp)
 
-target_link_libraries(SuperHaxagon sfml-graphics sfml-window sfml-audio sfml-system)
+if(SFML_FOUND)
+    target_sources(SuperHaxagon PRIVATE
+        source/Driver/SFML/AudioLoaderSFML.cpp
+        source/Driver/SFML/AudioPlayerSoundSFML.cpp
+        source/Driver/SFML/AudioPlayerMusicSFML.cpp
+        source/Driver/SFML/FontSFML.cpp
+        source/Driver/SFML/PlatformSFML.cpp)
+endif()
+
+if(PSP)
+    target_link_libraries(SuperHaxagon pspaudio pspaudiolib pspctrl pspdebug pspdisplay pspge pspgu psppower)
+    target_compile_options(SuperHaxagon PRIVATE -O2 -g0)
+else()
+    target_link_libraries(SuperHaxagon sfml-graphics sfml-window sfml-audio sfml-system)
+endif()
 
 if(MINGW OR MSYS OR MSVC)
     # Only need to copy dll if on windows
@@ -79,6 +95,22 @@ if(MINGW OR MSYS OR MSVC)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/openal32.dll DESTINATION .)
 endif()
 
-add_custom_command(TARGET SuperHaxagon POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/romfs $<TARGET_FILE_DIR:SuperHaxagon>/romfs)
-install(TARGETS SuperHaxagon RUNTIME DESTINATION .)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/romfs DESTINATION .)
+if(PSP)
+    set(PSP_DIR ${CMAKE_CURRENT_BINARY_DIR}/PSP/GAME/SuperHaxagon)
+    add_custom_command(TARGET SuperHaxagon PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${PSP_DIR}/romfs)
+    add_custom_command(TARGET SuperHaxagon PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/romfs/levels.haxagon ${PSP_DIR}/romfs)
+    # TODO: Only copy files needed in the PSP version.
+    create_pbp_file(
+        TARGET SuperHaxagon
+        TITLE "Super Haxagon"
+        VERSION ${PROJECT_VERSION}
+        OUTPUT_DIR ${PSP_DIR}
+        ICON_PATH ${PROJECT_SOURCE_DIR}/media/psp_icon0.png
+        BACKGROUND_PATH ${PROJECT_SOURCE_DIR}/media/psp_pic1.png
+        #MUSIC_PATH ${PROJECT_SOURCE_DIR}/media/psp_snd0.at3
+	)#BUILD_PRX ENC_PRX) # TODO DEBUG: comment-in
+else()
+    add_custom_command(TARGET SuperHaxagon POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/romfs $<TARGET_FILE_DIR:SuperHaxagon>/romfs)
+    install(TARGETS SuperHaxagon RUNTIME DESTINATION .)
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/romfs DESTINATION .)
+endif()

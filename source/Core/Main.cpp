@@ -5,6 +5,8 @@
 #include "Driver/3DS/Platform3DS.hpp"
 #elif defined __SWITCH__
 #include "Driver/Switch/PlatformSwitch.hpp"
+#elif defined __PSP__
+#include "Driver/PSP/PlatformPSP.hpp"
 #elif defined _WIN64 || defined __CYGWIN__
 #include "Driver/Win/PlatformWin.hpp"
 #elif defined __linux__
@@ -23,11 +25,13 @@
 #endif
 
 namespace SuperHaxagon {
-	std::unique_ptr<Platform> getPlatform(int /* argc */, char** /* argv */) {
+	std::unique_ptr<Platform> getPlatform(int argc, char** argv) {
 		#if defined _3DS
 		return std::make_unique<Platform3DS>(Dbg::FATAL);
 		#elif defined __SWITCH__
 		return std::make_unique<PlatformSwitch>(Dbg::INFO);
+		#elif defined __PSP__
+		return std::make_unique<PlatformPSP>(Dbg::INFO, argc, argv); // TODO DEBUG: set to Dbg::FATAL
 		#elif defined _WIN64 || defined __CYGWIN__
 		return std::make_unique<PlatformWin>(Dbg::INFO);
 		#elif defined __linux__

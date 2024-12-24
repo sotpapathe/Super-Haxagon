@@ -2,7 +2,7 @@
 
 # ![Icon](./media/icon-3ds.png "Icon") Super-Haxagon
 
-Super Haxagon is a cross platform, open source [Super Hexagon](http://superhexagon.com/) clone for the Nintendo 3DS, Nintendo Switch, Windows, Linux, and the [TI-Nspire](https://education.ti.com/en/products/calculators/graphing-calculators/ti-nspire-cx-cas) (yes, the calculator). It is developed in C++ and uses no additional libraries for the core logic, making it easy (in theory) to port to new platforms. It also has a GUI based level editor called [Haxa Editor](https://github.com/RedTopper/Haxa-Editor).
+Super Haxagon is a cross platform, open source [Super Hexagon](http://superhexagon.com/) clone for the Nintendo 3DS, Nintendo Switch, Sony PlayStation Portable, Windows, Linux, and the [TI-Nspire](https://education.ti.com/en/products/calculators/graphing-calculators/ti-nspire-cx-cas) (yes, the calculator). It is developed in C++ and uses no additional libraries for the core logic, making it easy (in theory) to port to new platforms. It also has a GUI based level editor called [Haxa Editor](https://github.com/RedTopper/Haxa-Editor).
 
 ## Download
 
@@ -21,7 +21,7 @@ _Warning: The windows/linux versions requires a graphics adapter with OpenGL 3.2
 
 ## Building
 
-Super Haxagon targets the 3DS, Switch, Windows (MinGW + MSVC), and Linux. For desktop platforms, it uses a cross platform library called SFML, so it will probably also compile on other platforms that support it.
+Super Haxagon targets the 3DS, Switch, PSP, Windows (MinGW + MSVC), and Linux. For desktop platforms, it uses a cross platform library called SFML, so it will probably also compile on other platforms that support it.
 
 1. Clone this repository with `git clone https://github.com/RedTopper/Super-Haxagon.git --recursive`
 
@@ -36,6 +36,10 @@ Super Haxagon targets the 3DS, Switch, Windows (MinGW + MSVC), and Linux. For de
 1. Get MinGW and DevkitPro and install dependencies listed in the Makefile
 1. Use the provided Makefile with the command `make TARGET:=SWITCH`
 1. Copy the .nro to `sdmc:/switch/SuperHaxagon/SuperHaxagon.nro` and launch it from the hbmenu
+
+### PSP Build
+
+TODO (pspdev, psp-cmake && make, where to copy which files)
 
 ### TI-Nspire Build
 
@@ -118,6 +122,7 @@ Below are a few screenshots featuring the various platforms that Super Haxagon c
 <img width="500" src="./media/screenshots/luma-2020-07-11-06-48-44-586.png" alt="In Game 3DS"          title="3DS"/>
 <img width="500" src="./media/screenshots/switch.gif"                       alt="In Game Switch (GIF)" title="In Game Switch (GIF)"/>
 <img width="500" src="./media/screenshots/nspire.png"                       alt="TI-Nspire"            title="TI-Nspire"/>
+<img width="500" src="./media/screenshots/psp.jpg"                          alt="PSP"                  title="PSP"/>
 <img width="500" src="./media/screenshots/20200727_015021.jpg"              alt="Hardware"             title="Hardware"/>
 
 <details><summary>More Screenshots</summary>
