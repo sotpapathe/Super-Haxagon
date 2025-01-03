@@ -23,7 +23,7 @@
 #endif
 
 namespace SuperHaxagon {
-	std::unique_ptr<Platform> getPlatform() {
+	std::unique_ptr<Platform> getPlatform(int /* argc */, char** /* argv */) {
 		#if defined _3DS
 		return std::make_unique<Platform3DS>(Dbg::FATAL);
 		#elif defined __SWITCH__
@@ -50,9 +50,9 @@ namespace SuperHaxagon {
 #ifdef _WIN64
 int WinMain() {
 #else
-int main(int, char**) {
+int main(int argc, char** argv) {
 #endif
-	const auto platform = SuperHaxagon::getPlatform();
+	const auto platform = SuperHaxagon::getPlatform(argc, argv);
 	platform->message(SuperHaxagon::Dbg::INFO, "main", "starting main");
 
 	if (platform->loop()) {
