@@ -3,6 +3,7 @@
 #include "Core/Twist.hpp"
 #include "Driver/PSP/AudioLoaderPSP.hpp"
 #include "Driver/PSP/AudioPlayerPSP.hpp"
+#include "Driver/PSP/CommonPSP.hpp"
 #include "Driver/PSP/FontPSP.hpp"
 
 #include <assert.h>
@@ -117,6 +118,7 @@ namespace SuperHaxagon {
 		sceGuStart(GU_DIRECT, _gu_list);
 		sceGuClearColor(0xFF000000);
 		sceGuClear(GU_COLOR_BUFFER_BIT);
+		sceKernelDcacheWritebackInvalidateAll();
 
 		pspDebugScreenSetOffset(reinterpret_cast<int>(_draw_buf));
 		pspDebugScreenSetXY(0, 0);
@@ -220,15 +222,6 @@ namespace SuperHaxagon {
 		return 0;
 	}
 
-	uint32_t PlatformPSP::packColor(const Color color) {
-		// The PSP CPU is little-endian and colors are packed in the
-		// ABGR order.
-		return (static_cast<uint32_t>(color.a) << 24) +
-			(static_cast<uint32_t>(color.b) << 16) +
-			(static_cast<uint32_t>(color.g) << 8) +
-			static_cast<uint32_t>(color.r);
-	}
-
 	bool PlatformPSP::initCallbacks() {
 		// XXX: Could the priority (0x11) be reduced (high value -> low priority)?
 		// XXX: Could the stack size (0xFA0) be reduced?
@@ -273,19 +266,12 @@ namespace SuperHaxagon {
 		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
 		sceGuEnable(GU_BLEND);
 
-		// TODO: double-check, vars for buffer dims
-		//sceGuTexMode(GU_PSM_8888, 0, 0, GU_FALSE);
-		////sceGuTexImage(0, 256, 128, 256, font_tex); // TODO: call only before drawing text?
-		//sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
-		//sceGuTexFilter(GU_NEAREST, GU_NEAREST);
-		//sceGuEnable(GU_TEXTURE_2D);
-		sceGuDisable(GU_TEXTURE_2D);
-
 		sceGuShadeModel(GU_FLAT);
 
 		sceGuDisable(GU_ALPHA_TEST);
 		sceGuDisable(GU_CULL_FACE);
 		sceGuDisable(GU_DEPTH_TEST);
+		sceGuDisable(GU_TEXTURE_2D);
 
 		sceGuFinish();
 		sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);

@@ -99,6 +99,7 @@ if(PSP)
     set(PSP_DIR ${CMAKE_CURRENT_BINARY_DIR}/PSP/GAME/SuperHaxagon)
     add_custom_command(TARGET SuperHaxagon PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${PSP_DIR}/romfs)
     add_custom_command(TARGET SuperHaxagon PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/romfs/levels.haxagon ${PSP_DIR}/romfs)
+    add_custom_command(TARGET SuperHaxagon PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/romfs/bump-it-up.ttf ${PSP_DIR}/romfs)
     # TODO: Only copy files needed in the PSP version.
     create_pbp_file(
         TARGET SuperHaxagon

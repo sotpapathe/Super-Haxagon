@@ -48,7 +48,6 @@ namespace SuperHaxagon {
 
 		static int exitCallback(int, int, void*);
 		static int callbackThread(SceSize, void*);
-		static uint32_t packColor(const Color color);
 
 		const std::string _game_dir;
 		const std::string _rom_dir;
