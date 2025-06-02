@@ -61,6 +61,17 @@ services:
     volumes:
       - ../:/root/git:z
       - ./Nspire/build.sh:/usr/local/bin/build.sh
+  PSP:
+    image: pspdev/pspdev:develop
+    container_name: super-haxagon-psp
+    hostname: super-haxagon-psp
+    command: build.sh
+    working_dir: /root/git/build/psp
+    environment:
+      - "CMAKE_ARGS=-DCMAKE_INSTALL_PREFIX=/root/git/release/psp -DCMAKE_BUILD_TYPE=Release"
+    volumes:
+      - ../:/root/git:z
+      - ./PSP/build.sh:/usr/local/bin/build.sh
   Switch:
     image: devkitpro/devkita64
     container_name: super-haxagon-switch
