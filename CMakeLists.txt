@@ -17,7 +17,7 @@ set(STB_VER ae721c50eaf761660b4f90cc590453cdb0c2acd0)
 
 # Used in 3DS for a console on the bottom screen
 # and Switch for debug output to a file
-set(DEBUG_CONSOLE false)
+set(DEBUG_CONSOLE true)
 
 set(SOURCES
     source/Main.cpp
