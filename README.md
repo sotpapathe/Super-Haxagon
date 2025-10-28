@@ -100,7 +100,7 @@ that make SuperHaxagon possible!
  * [N3DS Driver](./driver/N3DS/LICENSE.md) for the Nintendo 3DS
  * [Switch Driver](./driver/Switch/LICENSE.md) for the Nintendo Switch
  * [Nspire Driver](./driver/Nspire/LICENSE.md) for the TI-Nspire
- * [SFML Driver](./driver/Switch/LICENSE.md) for Linux, macOS, and Windows
+ * [SFML Driver](./driver/SFML/LICENSE.md) for Linux, macOS, and Windows
  * [SDL2 Driver](./driver/SDL2/LICENSE.md) for PortMaster and MiyooMini
 
 ## License
