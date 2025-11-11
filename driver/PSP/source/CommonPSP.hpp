@@ -10,10 +10,6 @@
 #include <vector>
 
 namespace SuperHaxagon {
-	// Always use channel 0 for music since there's at most one
-	// music track playing at any given time.
-	static constexpr int PSP_MUSIC_CHANNEL = 0;
-
 	// Compute the closest power of 2 greater or equal to x.
 	// https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 	constexpr int gePowerOf2(int x) {

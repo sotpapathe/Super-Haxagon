@@ -6,129 +6,96 @@
 #include "Driver/Platform.hpp"
 
 #include <algorithm>
-#include <cassert>
-#include <pspaudio.h>
 #include <pspaudio_kernel.h>
 #include <pspaudiolib.h>
-#include <pspthreadman.h>
 #include <sstream>
 #include <string>
 
 #include "AudioFilePSP.hpp"
-#include "CommonPSP.hpp"
 
 namespace SuperHaxagon {
 	struct Music::MusicImpl {
-		MusicImpl(const Platform& platform, const std::string& path) : path(path), af(createAudioFile(path)) {
-			if (!af || af->sampleRate() != PSP_AUDIO_FREQ_44K) {
+		MusicImpl(const Platform& platform, const std::string& path) : _af(createAudioFile(path)) {
+			if (!_af || _af->sampleRate() != PSP_AUDIO_FREQ_44K) {
 				// This is not a fatal error since the game
 				// first looks for user-supplied audio files
 				// and falls back to built-in files.
 				return;
 			}
 			loaded = true;
+			pspAudioSetChannelCallback(PSP_MUSIC_CHANNEL, callback, this);
 
 			std::stringstream s;
-			s << "playing \"" << af->path() << "\", " << af->numSamples() << " samples, " << af->sampleRate() << " Hz";
+			s << "playing \"" << _af->path() << "\", " << _af->numSamples() << " samples, " << _af->sampleRate() << " Hz";
 			platform.message(Dbg::INFO, "music", s.str());
 		}
 
 		~MusicImpl() {
-			if (threadId >= 0) {
-				SceKernelThreadRunStatus status;
-				sceKernelReferThreadRunStatus(threadId, &status);
-				if (status.status == PSP_THREAD_RUNNING) {
-					sceKernelTerminateDeleteThread(threadId);
+			if (loaded) {
+				// Only reset the callback if it was set by this instance.
+				pspAudioCallback_t _;
+				void *data;
+				pspAudioGetChannelCallback(PSP_MUSIC_CHANNEL, &_, &data);
+				if (data == this) {
+					pspAudioSetChannelCallback(PSP_MUSIC_CHANNEL, nullptr, nullptr);
 				}
 			}
 		}
 
 		float getTime() {
 			if (loaded) {
-				return af->getTime();
+				return _af->getTime();
 			}
 			return 0.0f;
 		}
 
-		void startThread() {
-			if (!loaded) {
-				return;
-			}
-			if (threadId >= 0) {
-				SceKernelThreadRunStatus status;
-				sceKernelReferThreadRunStatus(threadId, &status);
-				if (status.status == PSP_THREAD_RUNNING) {
-					return;
-				}
-			}
-			// No playback thread running, create a new one.
-			threadId = sceKernelCreateThread(
-					path.c_str(),
-					soundThread,
-					0x11,
-					0xFA0,
-					PSP_THREAD_ATTR_USER,
-					nullptr);
-			if (threadId < 0) {
-				return;
-			}
-			sceKernelStartThread(threadId, sizeof(MusicImpl), const_cast<MusicImpl*>(this));
-		}
+		// Always use channel 0 for music since there's at most one
+		// music track playing at any given time.
+		static constexpr int PSP_MUSIC_CHANNEL = 0;
 
-		const std::string path;
-		std::unique_ptr<AudioFile> af;
-		SceUID threadId = -1;
 		// The PSP's CPU has a single core so using volatile instead of
 		// std::atomic should be safe enough.
+		// TODO: use semaphores/events?
 		volatile bool done = false;
 		volatile bool loop = false;
 		volatile bool playing = false;
 		bool loaded = false;
 
 		private:
-		static int soundThread(SceSize argpSize, void *argp) {
-			assert(argpSize == sizeof(MusicImpl));
-			assert(argp);
-			auto& impl = *reinterpret_cast<MusicImpl*>(argp);
-			impl.done = false;
-			impl.playing = true;
-			Sample buf[PSP_NUM_AUDIO_SAMPLES];
-			while (!impl.done) {
-				if (impl.playing) {
-					const long r = impl.af->read(buf, PSP_NUM_AUDIO_SAMPLES);
-					if (r == 0 && impl.loop) {
-						// EOF reached, start from the beginning.
-						if (!impl.af->rewind()) {
-							// Read error.
-							impl.done = true;
-						}
-					} else if (r <= 0) {
-						// EOF or error.
-						impl.done = true;
-					}
-					if (impl.done) {
-						std::fill(buf, buf + PSP_NUM_AUDIO_SAMPLES, Sample{});
-					}
-				} else {
-					std::fill(buf, buf + PSP_NUM_AUDIO_SAMPLES, Sample{});
- 				}
-				// XXX: still have cracking as with sceAudioOutputBlocking()
-				//while (sceAudioGetChannelRestLen(PSP_MUSIC_CHANNEL) > 0) {
-				//	// TODO: sleep (PSP_NUM_AUDIO_SAMPLES / PSP_AUDIO_FREQ_44K / 10) or so
-				//}
-				//sceAudioOutput(PSP_MUSIC_CHANNEL, PSP_AUDIO_VOLUME_MAX, buf);
-				sceAudioOutputBlocking(PSP_MUSIC_CHANNEL, PSP_AUDIO_VOLUME_MAX, buf);
- 			}
-			impl.threadId = -1;
-			return sceKernelExitDeleteThread(0);
- 		}
+		// The PSP audio callback must be a free function. We pass the
+		// pointer to the current MusicImpl instance as additional
+		// data to allow calling its audioCallback() member function.
+		static void callback(void* buf, unsigned numSamples, void* data) {
+			reinterpret_cast<MusicImpl*>(data)->
+				audioCallback(reinterpret_cast<Sample*>(buf), numSamples);
+		}
+
+		std::unique_ptr<AudioFile> _af;
+
+		void audioCallback(Sample* buf, int numSamples) {
+			if (!playing) {
+				std::fill(buf, buf + numSamples, Sample{});
+				return;
+			}
+			const long r = _af->read(buf, numSamples);
+			if (r == 0 && loop) {
+				// EOF reached, start from the beginning.
+				if (!_af->rewind()) {
+					// Read error.
+					done = true;
+				}
+			} else if (r <= 0) {
+				// EOF or error.
+				done = true;
+			}
+		}
 	};
 
 	Music::Music(std::unique_ptr<Music::MusicImpl> impl) : _impl(std::move(impl)) {}
 
 	Music::~Music() = default;
 
-	// Track looping is handled in soundThread().
+	// Track looping is handled in audioCallback().
 	void Music::update() const {}
 
 	void Music::setLoop(const bool loop) const {
@@ -136,7 +103,7 @@ namespace SuperHaxagon {
 	}
 
 	void Music::play() const {
-		_impl->startThread();
+		_impl->playing = true;
 	}
 
 	void Music::pause() const {

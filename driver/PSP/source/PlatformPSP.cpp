@@ -11,14 +11,12 @@
 #include "Driver/Tools/Random.hpp"
 
 #include <filesystem>
-#include <pspaudio.h>
 #include <pspaudiolib.h>
 #include <psploadexec.h>
 #include <psprtc.h>
 #include <pspthreadman.h>
 #include <psputils.h>
 
-#include "CommonPSP.hpp"
 #include "ControlsPSP.hpp"
 
 // The PSP CPU is little endian and the sizes of basic types are the following:
@@ -50,8 +48,8 @@ namespace SuperHaxagon {
 			running = initCallbacks();
 			screen = createScreen(debug);
 			initControls();
-			if (sceAudioChReserve(PSP_MUSIC_CHANNEL, PSP_NUM_AUDIO_SAMPLES, PSP_AUDIO_FORMAT_STEREO) < 0) {
-				message(Dbg::FATAL, "platform", "error reserving music channel");
+			if (pspAudioInit() < 0) {
+				message(Dbg::FATAL, "platform", "error initializing audio");
 				shutdown();
 			}
 
@@ -59,7 +57,7 @@ namespace SuperHaxagon {
 		}
 
 		void shutdown() {
-			sceAudioChRelease(PSP_MUSIC_CHANNEL);
+			pspAudioEnd();
 			sceKernelExitGame();
 			debugStream.close();
 		}
