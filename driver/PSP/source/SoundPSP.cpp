@@ -26,6 +26,7 @@ namespace SuperHaxagon {
 			std::stringstream s;
 			s << "loaded \"" << buffer.path << "\", " << buffer.samples.size()
 				<< " samples (" << buffer.samples.size() * sizeof(Sample) / 1024 << " kB)";
+			s << " [" << buffer.samples.data() << " - " << buffer.samples.data() + buffer.samples.size() << "]";
 			platform.message(Dbg::INFO, "sound", s.str());
 		}
 
