@@ -4,6 +4,8 @@
 #ifndef SUPER_HAXAGON_PSP_AUDIO_BUFFER_PSP_HPP
 #define SUPER_HAXAGON_PSP_AUDIO_BUFFER_PSP_HPP
 
+#include "Driver/Platform.hpp"
+
 #include <string>
 #include <vector>
 
@@ -15,7 +17,7 @@ namespace SuperHaxagon {
 	// PSP_NUM_AUDIO_SAMPLES, with silent samples appended after the file
 	// samples to reach the necessary size.
 	struct AudioBuffer {
-		AudioBuffer(const std::string& path);
+		AudioBuffer(const Platform& platform, const std::string& path);
 
 		std::string path;
 		std::vector<Sample> samples;

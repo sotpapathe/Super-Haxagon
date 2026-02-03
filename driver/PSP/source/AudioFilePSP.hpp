@@ -4,6 +4,8 @@
 #ifndef SUPER_HAXAGON_PSP_AUDIO_FILE_PSP_HPP
 #define SUPER_HAXAGON_PSP_AUDIO_FILE_PSP_HPP
 
+#include "Driver/Platform.hpp"
+
 #include <memory>
 #include <stdint.h>
 #include <string>
@@ -53,7 +55,7 @@ namespace SuperHaxagon {
 	// The function returns on the first file that is successfully read. If
 	// no file is successfully read it returns an uninitialized
 	// std::unique_ptr.
-	std::unique_ptr<AudioFile> createAudioFile(const std::string& pathNoExt);
+	std::unique_ptr<AudioFile> createAudioFile(const Platform& platform, const std::string& pathNoExt);
 }
 
 #endif // SUPER_HAXAGON_PSP_AUDIO_FILE_PSP_HPP

@@ -4,13 +4,15 @@
 #ifndef SUPER_HAXAGON_PSP_AUDIO_FILE_WAV_PSP_HPP
 #define SUPER_HAXAGON_PSP_AUDIO_FILE_WAV_PSP_HPP
 
+#include "Driver/Platform.hpp"
+
 #include <pspiofilemgr.h>
 
 #include "AudioFilePSP.hpp"
 
 namespace SuperHaxagon {
 	struct AudioFileWav : public AudioFile {
-		AudioFileWav(const std::string& path);
+		AudioFileWav(const Platform& platform, const std::string& path);
 
 		~AudioFileWav();
 

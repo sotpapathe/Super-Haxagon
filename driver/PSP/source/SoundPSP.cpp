@@ -16,7 +16,7 @@
 
 namespace SuperHaxagon {
 	struct Sound::SoundImpl {
-		SoundImpl(const Platform& platform, const std::string& path) : buffer(path) {
+		SoundImpl(const Platform& platform, const std::string& path) : buffer(platform, path) {
 			if (buffer.samples.empty()) {
 				std::stringstream s;
 				s << "error loading \"" << path << "\", expected 2 channel, 16-bit PCM, 44.1 kHz audio";

@@ -15,12 +15,12 @@ namespace SuperHaxagon {
 		return PSP_NUM_AUDIO_SAMPLES * (r.quot + (r.rem > 0));
 	}
 
-	std::unique_ptr<AudioFile> createAudioFile(const std::string& path) {
+	std::unique_ptr<AudioFile> createAudioFile(const Platform& platform, const std::string& path) {
 		auto vorbis = std::make_unique<AudioFileVorbis>(path + ".ogg");
 		if (vorbis && vorbis->numSamples() > 0) {
 			return vorbis;
 		}
-		auto wav = std::make_unique<AudioFileWav>(path + ".wav");
+		auto wav = std::make_unique<AudioFileWav>(platform, path + ".wav");
 		if (wav && wav->numSamples() > 0) {
 			return wav;
 		}

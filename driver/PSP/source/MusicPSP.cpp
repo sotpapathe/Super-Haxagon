@@ -15,7 +15,7 @@
 
 namespace SuperHaxagon {
 	struct Music::MusicImpl {
-		MusicImpl(const Platform& platform, const std::string& path) : _af(createAudioFile(path)) {
+		MusicImpl(const Platform& platform, const std::string& path) : _af(createAudioFile(platform, path)) {
 			if (!_af || _af->sampleRate() != PSP_AUDIO_FREQ_44K) {
 				// This is not a fatal error since the game
 				// first looks for user-supplied audio files

@@ -4,6 +4,7 @@
 #include "AudioFileWavPSP.hpp"
 
 #include <algorithm>
+#include <sstream>
 #include <string.h>
 
 namespace SuperHaxagon {
@@ -43,14 +44,25 @@ namespace SuperHaxagon {
 		}
 	};
 
-	AudioFileWav::AudioFileWav(const std::string& path) : _path(path) {
+	AudioFileWav::AudioFileWav(const Platform& platform, const std::string& path) : _path(path) {
+		std::stringstream s;
+		s << "opening \"" << path << "\"";
+		platform.message(Dbg::WARN, "sound", s.str());
 		_f = sceIoOpen(_path.c_str(), PSP_O_RDONLY, 0777);
 		if (_f < 0) {
+			std::stringstream s;
+			s << "error loading \"" << path << "\", couldn't open";
+			platform.message(Dbg::WARN, "sound", s.str());
 			return;
 		}
+		s << " ok " << _f;
+		platform.message(Dbg::WARN, "sound", s.str());
 		WavHeader header;
 		const int n = sceIoRead(_f, &header, sizeof header);
 		if (n != sizeof header || !header.supported()) {
+			std::stringstream s;
+			s << "error loading \"" << path << "\", header error";
+			platform.message(Dbg::WARN, "sound", s.str());
 			sceIoClose(_f);
 			_f = -1;
 			return;
