@@ -16,7 +16,7 @@ set(APP_UNIQUE_ID "0x099AA")
 set(STB_VER ae721c50eaf761660b4f90cc590453cdb0c2acd0)
 
 # Used in 3DS for a console on the bottom screen
-# and Switch for debug output to a file
+# and PSP/Switch for debug output to a file
 set(DEBUG_CONSOLE true)
 
 set(SOURCES
@@ -56,6 +56,8 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Nintendo3DS")
     include(driver/N3DS/3ds.cmake)
 elseif(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
     include(driver/Switch/switch.cmake)
+elseif(PSP) # psp-cmake doesn't set CMAKE_SYSTEM_NAME to a useful value.
+    include(driver/PSP/psp.cmake)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Nspire")
     include(driver/Nspire/nspire.cmake)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Miyoo")
