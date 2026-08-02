@@ -103,6 +103,13 @@ jobs:
             romfs: 'yes'
             os: ubuntu-latest
 
+          - build: 'PSP'
+            container: docker.io/pspdev/pspdev:develop
+            artifact: PSP-mips32
+            cache: 'no'
+            romfs: 'yes'
+            os: alpine-latest
+
           - build: 'Switch'
             container: docker.io/devkitpro/devkita64:latest
             artifact: Switch-arm64
