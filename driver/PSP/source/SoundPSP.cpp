@@ -87,6 +87,7 @@ namespace SuperHaxagon {
 	}
 
 	std::unique_ptr<Sound> createSound(const Platform& platform, const std::string& path) {
+		return nullptr;
 		auto data = std::make_unique<Sound::SoundImpl>(platform, path);
 		if (data->buffer.samples.empty()) return nullptr;
 		return std::make_unique<Sound>(std::move(data));
