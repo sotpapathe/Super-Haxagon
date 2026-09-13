@@ -5,89 +5,131 @@
 
 #include "Driver/Platform.hpp"
 
-#include <algorithm>
-#include <pspaudio_kernel.h>
-#include <pspaudiolib.h>
+#include <pspaudio.h>
+#include <pspiofilemgr.h>
+#include <pspmp3.h>
+#include <pspthreadman.h>
 #include <sstream>
 #include <string>
 
-#include "AudioFilePSP.hpp"
+#include "CommonPSP.hpp"
 
 namespace SuperHaxagon {
 	struct Music::MusicImpl {
-		MusicImpl(const Platform& platform, const std::string& path) : _af(createAudioFile(path)) {
-			if (!_af || _af->sampleRate() != PSP_AUDIO_FREQ_44K) {
-				// This is not a fatal error since the game
-				// first looks for user-supplied audio files
-				// and falls back to built-in files.
+		MusicImpl(const Platform& platform, const std::string& path) {
+			threadId = sceKernelCreateThread(
+					"musicThread",
+					musicCallback,
+					PSP_THREAD_USER_MAX_PRIORITY,
+					64 * 1024,
+					PSP_THREAD_ATTR_USER,
+					nullptr);
+			if (threadId < 0 || sceKernelStartThread(threadId, sizeof(char*), const_cast<char*>(path.c_str())) < 0) {
+				platform.message(Dbg::WARN, "music", "error creating music thread");
 				return;
 			}
-			loaded = true;
-			pspAudioSetChannelCallback(PSP_MUSIC_CHANNEL, callback, this);
+			// TODO: wait for thread to initialize
 
 			std::stringstream s;
-			s << "playing \"" << _af->path() << "\", " << _af->numSamples() << " samples, " << _af->sampleRate() << " Hz";
+			s << "playing \"" << path << "\"";
 			platform.message(Dbg::INFO, "music", s.str());
 		}
 
 		~MusicImpl() {
-			if (loaded) {
-				// Only reset the callback if it was set by this instance.
-				pspAudioCallback_t _;
-				void *data;
-				pspAudioGetChannelCallback(PSP_MUSIC_CHANNEL, &_, &data);
-				if (data == this) {
-					pspAudioSetChannelCallback(PSP_MUSIC_CHANNEL, nullptr, nullptr);
-				}
+			if (threadId >= 0) {
+				// TODO: stop thread
 			}
 		}
 
 		float getTime() {
-			if (loaded) {
-				return _af->getTime();
-			}
+			// TODO: how? SceMp3???
 			return 0.0f;
 		}
 
-		// Always use channel 0 for music since there's at most one
-		// music track playing at any given time.
-		static constexpr int PSP_MUSIC_CHANNEL = 0;
-
-		// The PSP's CPU has a single core so using volatile instead of
-		// std::atomic should be safe enough.
-		// TODO: use semaphores/events?
-		volatile bool done = false;
-		volatile bool loop = false;
-		volatile bool playing = false;
-		bool loaded = false;
+		SceUID threadId = -1;
 
 		private:
-		// The PSP audio callback must be a free function. We pass the
-		// pointer to the current MusicImpl instance as additional
-		// data to allow calling its audioCallback() member function.
-		static void callback(void* buf, unsigned numSamples, void* data) {
-			reinterpret_cast<MusicImpl*>(data)->
-				audioCallback(reinterpret_cast<Sample*>(buf), numSamples);
+		static int musicCallback(SceSize dataSize, void* data) {
+			if (dataSize != sizeof(char*) || !data) {
+				return -1;
+			}
+			const char* const path = reinterpret_cast<const char*>(data);
+			const SceUID fd = sceIoOpen(path, PSP_O_RDONLY, 0777);
+			if (fd < 0) {
+				return -1;
+			}
+			int status = 0;
+			int samplesPlayed = 0;
+
+			alignas(64) SceUChar8 mp3Buf[16 * 1024];
+			alignas(64) SceUChar8 pcmBuf[16 * (1152 / 2)];
+			SceMp3InitArg mp3Init;
+			mp3Init.mp3StreamStart = 0;
+			mp3Init.mp3StreamEnd = sceIoLseek32(fd, 0, PSP_SEEK_END);
+			mp3Init.mp3Buf = mp3Buf;
+			mp3Init.mp3BufSize = sizeof(mp3Buf);
+			mp3Init.pcmBuf = pcmBuf;
+			mp3Init.pcmBufSize = sizeof(pcmBuf);
+			const SceInt32 handle = sceMp3ReserveMp3Handle(&mp3Init);
+			if (handle < 0) {
+				status = -1;
+				goto cleanup1;
+			}
+			if (fillbuf(fd, handle) < 0 || sceMp3Init(handle) < 0) {
+				status = -1;
+				goto cleanup2;
+			}
+			while (1) { // TODO: stop condition
+				// TODO: check for paused
+				if (sceMp3CheckStreamDataNeeded(handle) > 0) {
+					if (fillbuf(fd, handle) < 0) {
+						status = -1;
+						goto cleanup2;
+					}
+				}
+				// TODO: retry Decode in case looping is needed
+				SceShort16* samples;
+				SceInt32 bytesDecoded = sceMp3Decode(handle, &samples);
+				if (bytesDecoded < 0) {
+					status = -1;
+					goto cleanup2;
+				}
+				if (bytesDecoded == 0) {
+					sceMp3ResetPlayPosition(handle);
+					samplesPlayed = 0;
+					// TODO: paused = true;
+					// TODO: handle looping?
+				}
+				// TODO: play
+				samplesPlayed += sceAudioSRCOutputBlocking(PSP_AUDIO_VOLUME_MAX, samples);
+			}
+cleanup2:
+			sceMp3ReleaseMp3Handle(handle);
+cleanup1:
+			sceIoClose(fd);
+			return 0;
 		}
 
-		std::unique_ptr<AudioFile> _af;
-
-		void audioCallback(Sample* buf, int numSamples) {
-			if (!playing) {
-				std::fill(buf, buf + numSamples, Sample{});
-				return;
+		static int fillbuf(SceUID fd, SceInt32 handle)
+		{
+			SceUChar8* dst;
+			SceInt32 toWrite;
+			SceInt32 srcPos;
+			if (sceMp3GetInfoToAddStreamData(handle, &dst, &toWrite, &srcPos) < 0
+					|| sceIoLseek32(fd, srcPos, PSP_SEEK_SET) < 0) {
+				return -1;
 			}
-			const long r = _af->read(buf, numSamples);
-			if (r == 0 && loop) {
-				// EOF reached, start from the beginning.
-				if (!_af->rewind()) {
-					// Read error.
-					done = true;
-				}
-			} else if (r <= 0) {
-				// EOF or error.
-				done = true;
+			int read = sceIoRead(fd, dst, toWrite);
+			if (read < 0) {
+				return -1;
 			}
+			if (read == 0) {
+				return 0;
+			}
+			if (sceMp3NotifyAddStreamData(handle, read) < 0) {
+				return -1;
+			}
+			return srcPos > 0;
 		}
 	};
 
@@ -99,19 +141,19 @@ namespace SuperHaxagon {
 	void Music::update() const {}
 
 	void Music::setLoop(const bool loop) const {
-		_impl->loop = loop;
+		// TODO: notify thread
 	}
 
 	void Music::play() const {
-		_impl->playing = true;
+		// TODO: notify thread
 	}
 
 	void Music::pause() const {
-		_impl->playing = false;
+		// TODO: notify thread
 	}
 
 	bool Music::isDone() const {
-		return _impl->done;
+		return true; // TODO
 	}
 
 	float Music::getTime() const {
@@ -120,7 +162,7 @@ namespace SuperHaxagon {
 
 	std::unique_ptr<Music> createMusic(const Platform& platform, const std::string& path) {
 		auto data = std::make_unique<Music::MusicImpl>(platform, path);
-		if (!data->loaded) return nullptr;
+		//if (!data->loaded) return nullptr; // TODO
 		return std::make_unique<Music>(std::move(data));
 	}
 }
