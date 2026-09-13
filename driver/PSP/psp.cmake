@@ -24,7 +24,7 @@ set(DRIVER
 find_package(Vorbis REQUIRED)
 
 add_executable(${PROJECT_NAME} ${DRIVER} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} Vorbis::vorbisfile pspaudio pspaudiolib pspctrl pspdebug pspdisplay pspge pspgu pspreg)
+target_link_libraries(${PROJECT_NAME} Vorbis::vorbisfile pspmp3 pspaudio pspaudiolib pspctrl pspdebug pspdisplay pspge pspgu pspreg)
 target_compile_options(${PROJECT_NAME} PRIVATE -O2 -g0)
 
 # I find the menu music somewhat annoying but comment-in the MUSIC_PATH line if

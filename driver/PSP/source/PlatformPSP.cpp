@@ -10,11 +10,14 @@
 #include "Driver/Tools/Configuration.hpp"
 #include "Driver/Tools/Random.hpp"
 
+#include <pspkerneltypes.h>
+
 #include <filesystem>
-#include <pspaudiolib.h>
 #include <psploadexec.h>
+#include <pspmp3.h>
 #include <psprtc.h>
 #include <pspthreadman.h>
+#include <psputility.h>
 #include <psputils.h>
 
 #include "CommonPSP.hpp"
@@ -49,8 +52,10 @@ namespace SuperHaxagon {
 			running = initCallbacks();
 			screen = createScreen(debug);
 			initControls();
-			if (pspAudioInit() < 0) {
-				message(Dbg::FATAL, "platform", "error initializing audio");
+			if (sceUtilityLoadModule(PSP_MODULE_AV_AVCODEC) < 0
+					|| sceUtilityLoadModule(PSP_MODULE_AV_MP3) < 0
+					|| sceMp3InitResource() < 0) {
+				message(Dbg::FATAL, "platform", "error loading/initializing modules");
 				shutdown();
 			}
 
@@ -58,7 +63,9 @@ namespace SuperHaxagon {
 		}
 
 		void shutdown() {
-			pspAudioEnd();
+			sceMp3TermResource();
+			sceUtilityUnloadModule(PSP_MODULE_AV_MP3);
+			sceUtilityUnloadModule(PSP_MODULE_AV_AVCODEC);
 			sceKernelExitGame();
 			debugStream.close();
 		}
