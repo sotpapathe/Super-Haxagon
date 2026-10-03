@@ -5,7 +5,7 @@
 SuperHaxagon, like the original game [Super Hexagon](http://superhexagon.com/) by Terry Cavanagh, has only one goal.
 Survive as long as possible by avoiding the falling walls in a trippy, spinny frenzy!
 
-SuperHaxagon is a cross-platform, open source _Super Hexagon_ clone for the Nintendo 3DS, Nintendo Switch, Windows,
+SuperHaxagon is a cross-platform, open source _Super Hexagon_ clone for the Nintendo 3DS, Nintendo Switch, Sony PlayStation Portable, Windows,
 Linux, Portmaster, Miyoo Mini, and the [TI-Nspire](https://education.ti.com/en/products/calculators/graphing-calculators/ti-nspire-cx-cas) 
 (yes, the calculator). It is developed in C++ and uses no additional libraries for the core logic, making it easy (in theory) 
 to port to new platforms. It also has a GUI based level editor called [Haxa Editor](https://github.com/RedTopper/Haxa-Editor).
@@ -37,6 +37,7 @@ You can view the latest instructions with the links below:
 
  * [Nintendo 3DS](./driver/N3DS/INSTALL.md)
  * [Nintendo Switch](./driver/Switch/INSTALL.md)
+ * [Sony PlayStation Portable](./driver/PSP/INSTALL.md)
  * [TI-Nspire (Calculator)](./driver/Nspire/INSTALL.md)
  * [MiyooMini (OnionOS)](./driver/SDL2-Miyoo/INSTALL.md)
  * [PortMaster (Retro Handhelds)](./driver/SDL2-PortMaster/INSTALL.md)
@@ -67,6 +68,7 @@ Then, [find your device in the driver directory](./driver).
  * [Example](./driver/Example/README.md) for building an example driver
  * [N3DS](./driver/N3DS/README.md) for the Nintendo 3DS
  * [Nspire](./driver/Nspire/README.md) for the TI-Nspire
+ * [PSP](./driver/PSP/README.md) for the Sony PlayStation Portable
  * [SDL2-Linux](./driver/SDL2-Linux/README.md) for Linux with the SDL2 backend (incl. Flatpak)
  * [SDL2-Miyoo](./driver/SDL2-Miyoo/README.md) for the MiyooMini
  * [SDL2-PortMaster](./driver/SDL2-PortMaster/README.md) for PortMaster and retro gaming handhelds
@@ -99,6 +101,7 @@ that make SuperHaxagon possible!
 
  * [N3DS Driver](./driver/N3DS/LICENSE.md) for the Nintendo 3DS
  * [Switch Driver](./driver/Switch/LICENSE.md) for the Nintendo Switch
+ * [PSP Driver](./driver/PSP/LICENSE.md) for the Sony PlayStation Portable
  * [Nspire Driver](./driver/Nspire/LICENSE.md) for the TI-Nspire
  * [SFML Driver](./driver/SFML/LICENSE.md) for Linux, macOS, and Windows
  * [SDL2 Driver](./driver/SDL2/LICENSE.md) for PortMaster and MiyooMini
