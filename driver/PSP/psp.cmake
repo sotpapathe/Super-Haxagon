@@ -8,6 +8,10 @@ set(PLATFORM_NAME "PSP")
 set(DRIVER
 	driver/All/source/PlatformIsFullyRandom.cpp
 	driver/All/source/PlatformSupportsFilesystem.cpp
+	driver/PSP/source/AudioBufferPSP.cpp
+	driver/PSP/source/AudioFilePSP.cpp
+	driver/PSP/source/AudioFileVorbisPSP.cpp
+	driver/PSP/source/AudioFileWavPSP.cpp
 	driver/PSP/source/CommonPSP.cpp
 	driver/PSP/source/ControlsPSP.cpp
 	driver/PSP/source/FontPSP.cpp
@@ -17,8 +21,10 @@ set(DRIVER
 	driver/PSP/source/SoundPSP.cpp
 )
 
+find_package(Vorbis REQUIRED)
+
 add_executable(${PROJECT_NAME} ${DRIVER} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} pspctrl pspdebug pspdisplay pspge pspgu pspreg)
+target_link_libraries(${PROJECT_NAME} Vorbis::vorbisfile pspaudio pspaudiolib pspctrl pspdebug pspdisplay pspge pspgu pspreg)
 target_compile_options(${PROJECT_NAME} PRIVATE -O2 -g0)
 
 create_pbp_file(

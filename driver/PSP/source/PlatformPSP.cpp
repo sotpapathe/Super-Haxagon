@@ -11,6 +11,7 @@
 #include "Driver/Tools/Random.hpp"
 
 #include <filesystem>
+#include <pspaudiolib.h>
 #include <psploadexec.h>
 #include <psprtc.h>
 #include <pspthreadman.h>
@@ -47,10 +48,15 @@ namespace SuperHaxagon {
 			running = initCallbacks();
 			screen = createScreen(debug);
 			initControls();
+			if (pspAudioInit() < 0) {
+				message(Dbg::FATAL, "platform", "error initializing audio");
+				shutdown();
+			}
 			message(Dbg::INFO, "platform", "initialized");
 		}
 
 		void shutdown() {
+			pspAudioEnd();
 			sceKernelExitGame();
 			debugStream.close();
 		}
